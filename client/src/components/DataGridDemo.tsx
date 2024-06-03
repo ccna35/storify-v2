@@ -7,13 +7,14 @@ import {
 import { useContext, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { UserContext } from "../hooks/UserContext";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ProductService } from "../api";
 import SpinnerOfDoom from "./Spinners/SpinnerOfDoom";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import { Typography } from "@mui/material";
 import BasicModal from "./BasicModal";
+import ConfirmationDialog from "./ConfirmationDialog";
 
 export type RowType = {
   product_id: number;
@@ -33,7 +34,13 @@ export default function DataGridDemo() {
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  const [productId, setProductId] = useState<number | null>(null);
+  const [productId, setProductId] = useState<number>(0);
+
+  // Handling confirmation dialog
+  const [openConfirmationDialog, setOpenConfirmationDialog] = useState(false);
+
+  const handleOpenConfirmationDialog = () => setOpenConfirmationDialog(true);
+  const handleCloseConfirmationDialog = () => setOpenConfirmationDialog(false);
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 90 },
@@ -105,6 +112,8 @@ export default function DataGridDemo() {
           icon={<DeleteIcon />}
           onClick={() => {
             console.log(params.row.id);
+            setProductId(params.row.id);
+            handleOpenConfirmationDialog();
           }}
           label="Delete"
         />,
@@ -114,13 +123,25 @@ export default function DataGridDemo() {
           onClick={() => {
             setProductId(params.row.id as number);
             handleOpen();
-            console.log(params.row.id);
           }}
           label="Edit"
         />,
       ],
     },
   ];
+
+  const queryClient = useQueryClient();
+
+  const { mutateAsync: deleteProduct } = useMutation({
+    mutationFn: ProductService.deleteProduct,
+    onSuccess: () => {
+      handleCloseConfirmationDialog();
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+    onError: (error) => {
+      console.log(error);
+    },
+  });
 
   const navigate = useNavigate();
   const { updateUserInfo } = useContext(UserContext);
@@ -162,6 +183,12 @@ export default function DataGridDemo() {
         onPaginationModelChange={setPaginationModel}
       />
       <BasicModal open={open} handleClose={handleClose} productId={productId} />
+      <ConfirmationDialog
+        open={openConfirmationDialog}
+        handleClose={handleCloseConfirmationDialog}
+        confirmFunction={() => deleteProduct(productId)}
+        message="Are you sure you want to delete this product?"
+      />
     </>
   );
 }

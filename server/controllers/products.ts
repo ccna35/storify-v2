@@ -112,4 +112,26 @@ const updateProduct = async (req: Request, res: Response) => {
   }
 };
 
-export { getAllProducts, createProduct, getProduct, updateProduct };
+// Delete a product
+const deleteProduct = async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const query = "DELETE FROM products WHERE id = ?";
+
+  try {
+    await pool.query<ResultSetHeader>(query, [id]);
+
+    return res.status(200).json({ message: "Product deleted successfully" });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).send("Internal Server Error");
+  }
+};
+
+export {
+  getAllProducts,
+  createProduct,
+  getProduct,
+  updateProduct,
+  deleteProduct,
+};

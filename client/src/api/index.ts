@@ -42,9 +42,17 @@ const getProduct = async (id: number | null): Promise<Product> => {
   return res.data;
 };
 
+// Delete a product
+const deleteProduct = async (id: number) => {
+  const res = await query.delete(`/products/${id}`);
+
+  return res.data;
+};
+
 export const ProductService = {
   getProducts,
   createProduct,
   updateProduct,
   getProduct,
+  deleteProduct,
 };

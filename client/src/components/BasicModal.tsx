@@ -4,10 +4,18 @@ import Typography from "@mui/material/Typography";
 import Modal from "@mui/material/Modal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Product, ProductService } from "../api";
-import { Alert, Checkbox, FormLabel, Stack, TextField } from "@mui/material";
+import {
+  Alert,
+  Checkbox,
+  FormControlLabel,
+  FormLabel,
+  Stack,
+  TextField,
+} from "@mui/material";
 import { ProductFormValues } from "../pages/NewProduct";
 import { Controller, useForm } from "react-hook-form";
 import { LoadingButton } from "@mui/lab";
+import { useState } from "react";
 
 const style = {
   position: "absolute",
@@ -55,12 +63,12 @@ type EditProductProps = {
 };
 
 const EditProduct = ({ productId, handleClose }: EditProductProps) => {
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, isRefetching } = useQuery({
     queryKey: ["product", productId],
     queryFn: () => ProductService.getProduct(productId),
   });
 
-  if (isLoading) return <Typography>Loading...</Typography>;
+  if (isLoading || isRefetching) return <Typography>Loading...</Typography>;
 
   if (!data) return;
 
@@ -96,8 +104,6 @@ const Form = ({ productId, handleClose, data }: FormProps) => {
     is_featured: Boolean(is_featured),
   };
 
-  console.log("INITIAL_VALUES: ", INITIAL_VALUES);
-
   const {
     register,
     handleSubmit,
@@ -109,8 +115,6 @@ const Form = ({ productId, handleClose, data }: FormProps) => {
   });
 
   const onSubmit = async (data: ProductFormValues) => {
-    console.log(data);
-
     updateProduct({ id: productId, data });
   };
 
@@ -119,7 +123,6 @@ const Form = ({ productId, handleClose, data }: FormProps) => {
     onSuccess: () => {
       handleClose();
       queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["product"] });
     },
     onError: (error) => {
       console.log(error);
@@ -260,17 +263,19 @@ const Form = ({ productId, handleClose, data }: FormProps) => {
             <Alert severity="error">{errors.category.message}</Alert>
           )}
         </Stack>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <FormLabel htmlFor="featured">Mark featured?</FormLabel>
-          {/* <Checkbox size="small" id="featured" {...register("is_featured")} /> */}
-          <Controller
-            name="is_featured"
-            control={control}
-            render={({ field }) => (
-              <Checkbox {...field} id="featured" value={field.value} />
-            )}
-          />
-        </Stack>
+
+        <Controller
+          name="is_featured"
+          control={control}
+          rules={{ required: true }}
+          render={({ field }) => (
+            <FormControlLabel
+              control={<Checkbox {...field} checked={field.value} />}
+              label="Mark featured?"
+            />
+          )}
+        />
+
         <Stack direction="row" justifyContent="space-between">
           <LoadingButton
             type="submit"
