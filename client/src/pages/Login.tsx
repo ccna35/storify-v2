@@ -55,6 +55,7 @@ const Login = () => {
     defaultValues: INITIAL_VALUES,
     mode: "onChange",
   });
+
   const onSubmit = async (data: FormValues) => {
     setErrorMsg("");
     try {
@@ -62,6 +63,7 @@ const Login = () => {
         withCredentials: true,
         signal,
       });
+
       console.log(res);
 
       // Update user state with new data
@@ -69,6 +71,8 @@ const Login = () => {
       localStorage.setItem("user", JSON.stringify(res.data.user));
       navigate("/");
     } catch (error) {
+      console.log("error: ", error);
+
       setErrorMsg(error.response.data.message);
     }
   };
